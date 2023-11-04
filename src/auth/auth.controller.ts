@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { Tokens } from './interfaces';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { Cookie } from '@common/decorators';
 
 const REFRESH_TOKEN = 'refreshtoken';
 
@@ -36,11 +37,19 @@ export class AuthController {
             throw new BadRequestException('Cant login! Something went wrong!');
         }
         this.setRefreshTokenToCookies(tokens, res);
-        return { accessToken: tokens.accessToken };
     }
 
-    @Get('refresh')
-    refreshTokens() {}
+    @Get('refresh-tokens')
+    async refreshTokens(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response) {
+        if (!refreshToken) {
+            throw new UnauthorizedException();
+        }
+        const tokens = await this.authService.refreshTokens(refreshToken);
+        if (!tokens) {
+            throw new UnauthorizedException();
+        }
+        this.setRefreshTokenToCookies(tokens, res);
+    }
 
     private setRefreshTokenToCookies(tokens: Tokens, res: Response) {
         if (!tokens) {
@@ -53,6 +62,6 @@ export class AuthController {
             secure: this.configService.get('NODE_ENV', 'development') === 'production',
             path: '/',
         });
-        res.status(HttpStatus.CREATED).json(tokens);
+        res.status(HttpStatus.CREATED).json({ accessToken: tokens.accessToken });
     }
 }
