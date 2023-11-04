@@ -13,7 +13,7 @@ import {
 import { LoginDto, RegisterDto } from './dto';
 import { AuthService } from './auth.service';
 import { Tokens } from './interfaces';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Cookie, Public, UserAgent } from '@common/decorators';
 import { UserResponse } from '@user/responses';
@@ -42,6 +42,19 @@ export class AuthController {
             throw new BadRequestException('Cant login! Something went wrong!');
         }
         this.setRefreshTokenToCookies(tokens, res);
+    }
+
+    @Get('logout')
+    async logout(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response) {
+        console.log(refreshToken);
+        
+        if (!refreshToken) {
+            res.sendStatus(HttpStatus.OK);
+            return;
+        }
+        await this.authService.deleteRefreshToken(refreshToken);
+        res.cookie(REFRESH_TOKEN, '', { httpOnly: true, secure: true, expires: new Date() });
+        res.sendStatus(HttpStatus.OK);
     }
 
     @Get('refresh-tokens')
