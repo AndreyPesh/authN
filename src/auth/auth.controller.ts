@@ -11,9 +11,9 @@ import {
 import { LoginDto, RegisterDto } from './dto';
 import { AuthService } from './auth.service';
 import { Tokens } from './interfaces';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { Cookie } from '@common/decorators';
+import { Cookie, UserAgent } from '@common/decorators';
 
 const REFRESH_TOKEN = 'refreshtoken';
 
@@ -31,7 +31,7 @@ export class AuthController {
     }
 
     @Post('login')
-    async login(@Body() dto: LoginDto, @Res() res: Response) {
+    async login(@Body() dto: LoginDto, @Res() res: Response, @UserAgent() agent: string) {
         const tokens = await this.authService.login(dto);
         if (!tokens) {
             throw new BadRequestException('Cant login! Something went wrong!');
